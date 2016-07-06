@@ -1,0 +1,21 @@
+{
+  "name": "magix-local",
+  "version": "1.0.0",
+  "description": "magix模块从node_modules同步到项目工具",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/thx/magix-local.git"
+  },
+  "keywords": [
+    "magix",
+    "sync",
+    "local"
+  ],
+  "author": "xinglie <xinglie.lkf@taobao.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/thx/magix-local/issues"
+  },
+  "homepage": "https://github.com/thx/magix-local#readme"
+}
