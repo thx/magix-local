@@ -1,7 +1,7 @@
 var fs = require('fs');
 var path = require('path');
 var sep = path.sep;
-var copyFile = function(from, to) {
+var copyFile = function(from, to, callback) {
     if (fs.existsSync(from)) {
         var folders = path.dirname(to).split(sep);
         var p = '';
@@ -11,8 +11,14 @@ var copyFile = function(from, to) {
                 fs.mkdirSync(p);
             }
         }
-        var content = fs.readFileSync(from);
-        fs.writeFile(to, content);
+        var content = fs.readFileSync(from) + '';
+        if (callback) {
+            callback(content).then(function(c) {
+                fs.writeFileSync(to, c);
+            });
+        } else {
+            fs.writeFileSync(to, content);
+        }
     }
 };
 var walk = function(folder, callback) {
@@ -70,22 +76,49 @@ var Tool = {
             }
         });
     },
+    copyPkgFile: function(from, to) {
+        var extname = path.extname(from);
+        copyFile(from, to, function(content) {
+            return new Promise(function(resolve) {
+                if (extname == '.js') {
+                    content = Tool.resolveRequire(content);
+                    resolve(content);
+                } else {
+                    resolve(content);
+                }
+            });
+        });
+    },
     copy: function(pkgs, aim) {
         pkgs.forEach(function(pkg) {
             walk(pkg.folder + 'tmpl', function(file) {
-                copyFile(file, aim + pkg.name + path.sep + path.basename(file));
+                Tool.copyPkgFile(file, aim + pkg.name + path.sep + path.basename(file));
             });
+        });
+    },
+    aliReg: /\brequire\((['"])@alife\/([^'"]+)\1\)/g,
+    resolveRequire: function(content) {
+        return content.replace(Tool.aliReg, function(match, q, name) {
+            return 'require(\'../' + name + '/index\')';
         });
     }
 };
 module.exports = function(json, aim, rules) {
     var full = path.resolve(json);
-    var dir = path.dirname(full);
-    var nodeModules = dir + path.sep + 'node_modules' + path.sep;
-    if (!rules) {
-        rules = [/^@alife\/mx-/];
+    var stat = fs.lstatSync(full);
+    if (stat.isDirectory()) {
+        walk(full, function(file) {
+            var part = file.replace(full, '');
+            Tool.copyPkgFile(file, aim + part);
+        });
+    } else {
+        var dir = path.dirname(full);
+        var nodeModules = dir + path.sep + 'node_modules' + path.sep;
+        if (!rules) {
+            rules = [/^@alife\/mx-/];
+        }
+        Tool.walk(full, nodeModules, rules, function(pkgs) {
+            Tool.copy(pkgs, aim);
+        });
     }
-    Tool.walk(full, nodeModules, rules, function(pkgs) {
-        Tool.copy(pkgs, aim);
-    });
 };
