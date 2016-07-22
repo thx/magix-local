@@ -1,5 +1,6 @@
 var fs = require('fs');
 var path = require('path');
+var prompt = require('prompt');
 var sep = path.sep;
 var copyFile = function(from, to, callback) {
     if (fs.existsSync(from)) {
@@ -76,29 +77,68 @@ var Tool = {
             }
         });
     },
-    copyPkgFile: function(from, to) {
+    copyPkgFile: function(from, to, next) {
         var extname = path.extname(from);
         if (fs.existsSync(to)) {
-            console.log('already exists:', to);
-            return;
-        }
-        copyFile(from, to, function(content) {
-            return new Promise(function(resolve) {
-                if (extname == '.js') {
-                    content = Tool.resolveRequire(content);
-                    resolve(content);
+            prompt.start();
+            var property = {
+                name: 'yesno',
+                message: 'already exists:' + to + ',overwrite it?',
+                validator: /y[es]*|n[o]?/,
+                warning: 'Must respond yes or no',
+                default: 'no'
+            };
+            prompt.get(property, function(err, result) {
+                if (result.yesno == 'yes' || result.yesno == 'y') {
+                    copyFile(from, to, function(content) {
+                        return new Promise(function(resolve) {
+                            if (extname == '.js') {
+                                content = Tool.resolveRequire(content);
+                                resolve(content);
+                            } else {
+                                resolve(content);
+                            }
+                        });
+                    });
+                    next();
                 } else {
-                    resolve(content);
+                    next();
                 }
             });
-        });
+        } else {
+            copyFile(from, to, function(content) {
+                return new Promise(function(resolve) {
+                    if (extname == '.js') {
+                        content = Tool.resolveRequire(content);
+                        resolve(content);
+                    } else {
+                        resolve(content);
+                    }
+                });
+            });
+            next();
+        }
     },
-    copy: function(pkgs, aim) {
+    getFileListFromPkg: function(pkgs, aim) {
+        var list = [];
         pkgs.forEach(function(pkg) {
             walk(pkg.folder + 'tmpl', function(file) {
-                Tool.copyPkgFile(file, aim + pkg.name + path.sep + path.basename(file));
+                list.push({
+                    from: file,
+                    to: aim + pkg.name + path.sep + path.basename(file)
+                });
             });
         });
+        return list;
+    },
+    copyFileList: function(list) {
+        var next = function() {
+            var one = list.shift();
+            if (one) {
+                Tool.copyPkgFile(one.from, one.to, next);
+            }
+        };
+        next();
     },
     aliReg: /\brequire\((['"])@alife\/([^'"]+)\1\)/g,
     resolveRequire: function(content) {
@@ -111,10 +151,15 @@ module.exports = function(json, aim, rules) {
     var full = path.resolve(json);
     var stat = fs.lstatSync(full);
     if (stat.isDirectory()) {
+        var list = [];
         walk(full, function(file) {
             var part = file.replace(full, '');
-            Tool.copyPkgFile(file, aim + part);
+            list.push({
+                from: file,
+                to: aim + part
+            });
         });
+        Tool.copyFileList(list);
     } else {
         var dir = path.dirname(full);
         var nodeModules = dir + path.sep + 'node_modules' + path.sep;
@@ -122,7 +167,8 @@ module.exports = function(json, aim, rules) {
             rules = [/^@alife\/mx-/];
         }
         Tool.walk(full, nodeModules, rules, function(pkgs) {
-            Tool.copy(pkgs, aim);
+            var fList = Tool.getFileListFromPkg(pkgs, aim);
+            Tool.copyFileList(fList);
         });
     }
 };
