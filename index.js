@@ -78,6 +78,10 @@ var Tool = {
     },
     copyPkgFile: function(from, to) {
         var extname = path.extname(from);
+        if (fs.existsSync(to)) {
+            console.log('already exists:', to);
+            return;
+        }
         copyFile(from, to, function(content) {
             return new Promise(function(resolve) {
                 if (extname == '.js') {
