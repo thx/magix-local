@@ -7,7 +7,12 @@
     "type": "git",
     "url": "git+https://github.com/thx/magix-local.git"
   },
+  "bin": {
+    "mx-sync": "bin/sync",
+    "ms": "bin/sync"
+  },
   "dependencies": {
+    "minimist": "^1.2.0",
     "prompt": "^1.0.0"
   },
   "keywords": [

@@ -1,0 +1,44 @@
+#!/usr/bin/env node --harmony
+
+"use strict";
+var pkg = require('../package.json');
+var argv = require('minimist')(process.argv.slice(2));
+var local = require('../index.js');
+
+if (argv['v'] || argv['version']) {
+  console.log(pkg.version);
+  process.exit();
+}
+
+if (argv['h'] || argv['help'] || process.argv.length === 2) {
+
+  console.log('')
+  console.log('同步npm包到本地')
+  console.log('')
+
+  console.log('Usage:')
+  console.log('')
+  console.log('    ms -h|--help          #show help info')
+  console.log('    ms -v|--version       #show version')
+  console.log('    ms modname dstdir     #sync mod')
+  console.log('')
+  console.log('Example:')
+  console.log('')
+  console.log('    ms @alife/mx-sem-share app/views/test')
+  console.log('')
+
+  process.exit();
+
+}
+
+var mod = argv._[0]
+var aim = argv._[1]
+
+local.syncMod(mod,aim)
+
+
+
+
+
+
+
