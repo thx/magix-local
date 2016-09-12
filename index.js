@@ -119,20 +119,21 @@ var Tool = {
                     var file1 = modules + p + path.sep + 'package.json';
                     var modules2 = path.dirname(json) + path.sep + 'node_modules' + path.sep + p + path.sep;
                     var file2 = modules2 + 'package.json';
-                    if (fs.existsSync(file1)) {
-                        pkgjson = Tool.readPkg(file1);
-                        Tool.pkgs.push({
-                            folder: modules + p + path.sep,
-                            name: p
-                        });
-                        Tool.walk(file1, modules, rules, cb);
-                    } else if (fs.existsSync(file2)) {
+                    // 先从自己下面找
+                    if (fs.existsSync(file2)) {
                         pkgjson = Tool.readPkg(file2)
                         Tool.pkgs.push({
                             folder: modules2,
                             name: p
                         });
                         Tool.walk(file2, modules2, rules, cb);
+                    }else if (fs.existsSync(file1)) { //找不到就找当前根目录的
+                        pkgjson = Tool.readPkg(file1);
+                        Tool.pkgs.push({
+                            folder: modules + p + path.sep,
+                            name: p
+                        });
+                        Tool.walk(file1, modules, rules, cb);
                     }
                 }
             }
@@ -149,6 +150,7 @@ var Tool = {
         var pkgVersion = one.pkgjson.version;
         var namWithVersionTo = pkgName + ':' + pkgVersion + ' to ' + one.to;
 
+console.log(namWithVersionTo+'namWithVersionTo')
         // 如果重复（前面已经处理过了），那么直接跳过
         if (Tool.hasHandledPkgs.indexOf(namWithVersionTo) !== -1) {
             next();
