@@ -1,6 +1,6 @@
 {
   "name": "magix-local",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "magix模块从node_modules同步到项目工具",
   "main": "index.js",
   "repository": {
@@ -12,6 +12,7 @@
     "ms": "bin/sync"
   },
   "dependencies": {
+    "fs-extra": "^0.30.0",
     "minimist": "^1.2.0",
     "prompt": "^1.0.0"
   },
