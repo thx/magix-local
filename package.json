@@ -12,6 +12,7 @@
     "ms": "bin/sync"
   },
   "dependencies": {
+    "chalk": "^1.1.3",
     "fs-extra": "^0.30.0",
     "minimist": "^1.2.0",
     "prompt": "^1.0.0"

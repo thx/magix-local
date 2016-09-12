@@ -5,6 +5,7 @@ var cp = require('child_process');
 var process = require('process');
 var sep = path.sep;
 var innerPathReg = /(['|"]?)@([^.]+)(\.html|\.less|\.css|\.sass)(['"]?)/g;
+var chalk = require('chalk');
 
 var copyFile = function(from, to) {
     if (fs.existsSync(from)) {
@@ -33,8 +34,18 @@ var walk = function(folder, callback) {
     });
 };
 
-var log = function(message){
-    console.log(message);
+var log = function(message,type){
+    type = type || 'log';
+
+    var msg = '[magix-local]  ' + message;
+
+    if (type === 'log') {
+        msg = chalk.green(msg);
+    }else{
+        msg = chalk.yellow(msg);
+    }
+
+    console.log(msg);
 };
 
 var LOCAL_VERSION = {
@@ -90,8 +101,9 @@ var Tool = {
         // 检测tnpm 没有就用 npm
         var result;
         var cmd = Tool.getNpm() + ' install ' + mod + ' --save';
-
+        console.log(chalk.blue("=============================================="));
         log(mod + ' is install....');
+        console.log(chalk.blue("=============================================="));
         cp.exec(cmd,{},function(err, stdout, stderr){
             if (err) {
                 console.error(err);
@@ -150,7 +162,6 @@ var Tool = {
         var pkgVersion = one.pkgjson.version;
         var namWithVersionTo = pkgName + ':' + pkgVersion + ' to ' + one.to;
 
-console.log(namWithVersionTo+'namWithVersionTo')
         // 如果重复（前面已经处理过了），那么直接跳过
         if (Tool.hasHandledPkgs.indexOf(namWithVersionTo) !== -1) {
             next();
@@ -177,16 +188,16 @@ console.log(namWithVersionTo+'namWithVersionTo')
         }
 
         if (pkgVersion <= preVersion && !Tool.prompt) {
-            if(pkgVersion < preVersion) log('ignore: '+ pkgName + ' to ' + one.to + ', new version('+pkgVersion+') is below the origin('+preVersion+')')
+            if(pkgVersion < preVersion) log('ignore: '+ pkgName + ' to ' + one.to + ', new version('+pkgVersion+') is below the origin('+preVersion+')','warning')
             next();
             return
         }
 
-        if (preVersion != pkgVersion && Tool.prompt) {
+        if (Tool.prompt) {
             prompt.start();
             var property = {
                 name: 'yesno',
-                message: 'already exists:' + pkgName + ',need sync ' + namWithVersionTo + ' overwrite it?',
+                message: chalk.cyan('already exists ' + pkgName+ ':' + preVersion + ', need sync ' + namWithVersionTo + ' overwrite it?'),
                 validator: /y[es]*|n[o]?/,
                 warning: 'Must respond yes or no',
                 default: 'no'
